@@ -49,11 +49,11 @@ graph TD
     Sched -- 3. Unblock Task --> MainTask
     MainTask -- 4. Call HAL --> HAL
     HAL -- 5. Register Write --> DMA
-    DMA -. 6. DMA Read .-> RxBuf
-    DMA -. 7. DMA Write .-> TxBuf
+    DMA -. 6 DMA Read .-> RxBuf
+    DMA -. 7 DMA Write .-> TxBuf
     MainTask -- 8. Run Algorithm --> VecMod
-    VecMod -. 9. Read Params .-> Cfg
-    VecMod -. 10. Read Write Data .-> RxBuf
+    VecMod -. 9 Read Params .-> Cfg
+    VecMod -. 10 Read Write Data .-> RxBuf
     MainTask -- 11. Enqueue --> MQ
     CommMod -- 12. Dequeue --> MQ
     CommMod -- 13. DMA Tx --> HAL
