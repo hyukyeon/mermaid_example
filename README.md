@@ -99,3 +99,19 @@ journey
 
 뷰어: GitHub, VSCode의 Mermaid 플러그인, 또는 https://mermaid.live/ 에 붙여넣어 확인하세요.
 
+
+## Extracting Mermaid from SVG
+
+scripts/svg_to_mermaid.py: SVG 파일에 포함된 Mermaid 정의를 추출하여 같은 이름의 .mmd 파일로 저장합니다.
+
+사용법:
+
+```bash
+# 실행 권한이 있는 경우
+scripts/svg_to_mermaid.sh diagram.svg
+# 또는
+python3 scripts/svg_to_mermaid.py diagram.svg
+```
+
+이 스크립트는 mermaid Live/CLI에서 생성된 SVG에 포함된 원본 Mermaid 텍스트를 찾아 저장하는 best-effort 도구입니다. 항상 완벽히 복원되지는 않을 수 있으니 결과를 검토하세요.
+
