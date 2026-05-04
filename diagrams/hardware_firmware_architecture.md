@@ -8,7 +8,7 @@ graph TD
     classDef hardware fill:#ffebee,stroke:#c62828,stroke-width:2px;
     classDef kernel fill:#f1f8e9,stroke:#558b2f,stroke-width:2px;
     classDef firmware fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
-    classDef dataClass fill:#fff3e0,stroke:#e65100,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef dataClass fill:#fff3e0,stroke:#e65100,stroke-width:1px,stroke-dasharray:5 5;
 
     %% 2. 하드웨어 영역
     subgraph HW_Layer [Hardware Layer]
@@ -18,8 +18,8 @@ graph TD
         BBA[Baseband Accelerator]:::hardware
     end
 
-    %% 3. 커널 / OS 영역
-    subgraph Kernel_Layer [Kernel / HAL Layer]
+    %% 3. 커널 OS 영역
+    subgraph Kernel_Layer [Kernel HAL Layer]
         direction TB
         ISR((HW Interrupt Handler)):::kernel
         HAL{HAL API}:::kernel
@@ -34,29 +34,29 @@ graph TD
         Module_VecCalc([Vector Math Module]):::firmware
         
         %% 클래스/구조체 성격을 나타내는 서브그래프
-        subgraph Data_Structures [Data Models / Context]
+        subgraph Data_Structures [Data Models Context]
             Context_Config[System Config Class]:::dataClass
-            Buffer_RxRx[Tx/Rx Ring Buffer]:::dataClass
+            Buffer_RxRx[Tx-Rx Ring Buffer]:::dataClass
         end
     end
 
     %% 5. 상호작용 및 실행 흐름 (플로우차트 성격)
     
     %% 하드웨어 -> 커널 흐름 (인터럽트)
-    BBA -- 1. H/W Interrupt --> ISR
+    BBA -- 1. HW Interrupt --> ISR
     
     %% 커널 -> 펌웨어 흐름 (스케줄링)
-    ISR -- 2. Set Event/Flag --> Sched
-    Sched -- 3. Context Switch & Unblock --> Task_Main
+    ISR -- 2. Set Event Flag --> Sched
+    Sched -- 3. Context Switch and Unblock --> Task_Main
     
     %% 펌웨어 -> 하드웨어 제어 (HAL 경유)
-    Task_Main -- 4. Call API for DMA Tx/Rx --> HAL
+    Task_Main -- 4. Call API for DMA --> HAL
     HAL -- 5. Register Write --> DMA
-    DMA -.-> Buffer_RxRx
+    DMA -. 6. Memory Direct Access .-> Buffer_RxRx
     
     %% 펌웨어 내부 로직 처리 (메서드 호출 및 데이터 접근)
     Task_Main -- 7. Run Algorithm --> Module_VecCalc
     Module_VecCalc -. 8. Read Parameters .-> Context_Config
-    Module_VecCalc -. 9. Read/Write Data .-> Buffer_RxRx
+    Module_VecCalc -. 9. Read-Write Data .-> Buffer_RxRx
 ```
 
