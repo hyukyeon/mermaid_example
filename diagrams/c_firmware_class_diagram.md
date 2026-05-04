@@ -214,6 +214,96 @@ classDiagram
     Comm_Config      o-- RingBuffer_t   : txBuf
     Comm_Config      o-- RingBuffer_t   : rxBuf
     SignalProc_Config o-- RingBuffer_t  : inputBuf
+
+    %% Inter-kernel output → next kernel input
+    SignalProc_Config --> RingBuffer_t  : outputBuf feeds Comm
+    Comm_Config       --> RingBuffer_t  : reads SignalProc output
+    Task_TCB          --> Task_TCB      : notifies next task via Queue
+```
+
+---
+
+## 2. Inter-Kernel Processing Pipeline
+
+각 커널의 연산 결과가 다음 커널의 입력으로 전달되는 흐름과
+태스크 내부 루프를 나타냅니다.
+
+```mermaid
+graph TD
+    classDef hw   fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef kern fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef fw   fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef buf  fill:#fff3e0,stroke:#e65100,stroke-width:1px,stroke-dasharray:5 5
+
+    INIT([System Init]):::fw --> SETUP
+
+    subgraph SETUP_GRP [One-time Setup]
+        SETUP[Init HAL and RTOS]:::fw
+        CREATE[Create Tasks and Queues]:::kern
+    end
+    SETUP --> CREATE
+    CREATE --> DMA_START
+
+    subgraph HW_GRP [Hardware Layer]
+        BBA[Baseband Accelerator]:::hw
+        DMA_START[Start DMA Rx]:::hw
+        DMA_TX[DMA Tx Transfer]:::hw
+    end
+
+    subgraph KERN_GRP [Kernel Layer]
+        IRQ[IRQ Handler]:::kern
+        SCHED[RTOS Scheduler]:::kern
+    end
+
+    subgraph DSP_GRP [DSP Task — Internal Loop]
+        WAIT_DSP{Wait Event Flag}:::kern
+        RD_RX[Read Rx RingBuffer]:::fw
+        PROC[FFT and Filter]:::fw
+        WR_OUT[Write Output RingBuffer]:::fw
+        NOTIFY[Notify Comm Task]:::kern
+    end
+
+    subgraph COMM_GRP [Comm Task — Internal Loop]
+        WAIT_COMM{Wait Queue Notify}:::kern
+        FMT[Format Packet]:::fw
+        WR_TX[Write Tx RingBuffer]:::fw
+        START_TX[Start DMA Tx]:::fw
+        WAIT_TX{Wait Tx Done IRQ}:::kern
+    end
+
+    RxBuf[(Rx RingBuffer)]:::buf
+    OutBuf[(Output RingBuffer)]:::buf
+    TxBuf[(Tx RingBuffer)]:::buf
+
+    %% HW → Kernel
+    BBA  -- HW Interrupt --> IRQ
+    IRQ  -- Set Event Flag --> SCHED
+    SCHED -- Unblock DSP Task --> WAIT_DSP
+    DMA_START -- DMA fills --> RxBuf
+
+    %% DSP Task internal loop
+    WAIT_DSP -- event received --> RD_RX
+    RD_RX   -- reads --> RxBuf
+    RD_RX   --> PROC
+    PROC    -- result written --> WR_OUT
+    WR_OUT  -- writes --> OutBuf
+
+    %% DSP output → Comm input (inter-kernel)
+    WR_OUT  -- Queue Send --> NOTIFY
+    NOTIFY  -- unblocks --> WAIT_COMM
+
+    %% Comm Task internal loop
+    WAIT_COMM -- data ready --> FMT
+    FMT   -- reads --> OutBuf
+    FMT   --> WR_TX
+    WR_TX -- fills --> TxBuf
+    WR_TX --> START_TX
+    START_TX --> DMA_TX
+    DMA_TX -- Tx Done IRQ --> WAIT_TX
+
+    %% Loop back to next cycle
+    WAIT_TX -. next cycle .-> WAIT_DSP
+    WAIT_DSP -. restart DMA .-> DMA_START
 ```
 
 ---
