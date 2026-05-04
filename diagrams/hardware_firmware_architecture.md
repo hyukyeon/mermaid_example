@@ -52,7 +52,7 @@ graph TD
     %% 펌웨어 -> 하드웨어 제어 (HAL 경유)
     Task_Main -- 4. Call API for DMA Tx/Rx --> HAL
     HAL -- 5. Register Write --> DMA
-    DMA -. 6. Memory Direct Access .-> Buffer_RxRx
+    DMA -.-> Buffer_RxRx
     
     %% 펌웨어 내부 로직 처리 (메서드 호출 및 데이터 접근)
     Task_Main -- 7. Run Algorithm --> Module_VecCalc
